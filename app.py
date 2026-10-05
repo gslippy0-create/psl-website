@@ -12,6 +12,12 @@ app.secret_key = os.getenv("PSL_SECRET_KEY", "change-this-secret-key")
 DB = Path("psl.db")
 ADMIN_USER = os.getenv("PSL_ADMIN_USER", "admin")
 ADMIN_PASSWORD = os.getenv("PSL_ADMIN_PASSWORD", "changeme")
+ADMIN_USER_2 = os.getenv("PSL_ADMIN_USER_2", "")
+ADMIN_PASSWORD_2 = os.getenv("PSL_ADMIN_PASSWORD_2", "")
+ADMIN_ACCOUNTS = [
+    (ADMIN_USER, ADMIN_PASSWORD),
+    (ADMIN_USER_2, ADMIN_PASSWORD_2),
+]
 API_KEY = os.getenv("PSL_API_KEY", "change-api-key")
 
 def db():
@@ -417,8 +423,10 @@ def dashboard():
 @app.route("/login",methods=["GET","POST"])
 def login():
     if request.method=="POST":
-        if request.form.get("username")==ADMIN_USER and request.form.get("password")==ADMIN_PASSWORD:
-            session["admin"]=True
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        if any(username == user and password == secret for user, secret in ADMIN_ACCOUNTS if user and secret):
+            session["admin"] = True
             return redirect(request.args.get("next") or url_for("admin"))
         return render_template("login.html",error="Incorrect username or password.")
     return render_template("login.html")
