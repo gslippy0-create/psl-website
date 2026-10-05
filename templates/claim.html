@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="page-head">
+    <span class="eyebrow">PSL ACCOUNT SETUP</span>
+    <h1>Connect Your PSL Account</h1>
+    <p>Sign in with Discord. We will automatically match your account when your Discord name matches your PSL manager or player name.</p>
+</section>
+
+{% if message %}
+<section class="panel">
+    <p>{{ message }}</p>
+</section>
+{% endif %}
+
+{% if error %}
+<section class="panel">
+    <p class="error">{{ error }}</p>
+</section>
+{% endif %}
+
+{% if not team %}
+<section class="panel">
+    <h2>Claim Your Team</h2>
+    <p>If your team was not matched automatically, choose it below. You only need to do this once.</p>
+
+    {% if unclaimed_teams %}
+    <form class="form" method="post">
+        <input type="hidden" name="action" value="claim_team">
+        <select name="team_id" required>
+            <option value="">Choose your team</option>
+            {% for t in unclaimed_teams %}
+            <option value="{{ t.id }}">{{ t.name }}{% if t.manager %} — {{ t.manager }}{% endif %}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Claim Team</button>
+    </form>
+    {% else %}
+    <p>No unclaimed teams are currently available.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if not player %}
+<section class="panel">
+    <h2>Claim Your Player</h2>
+    <p>If your player was not matched automatically, choose it below. You only need to do this once.</p>
+
+    {% if unclaimed_players %}
+    <form class="form" method="post">
+        <input type="hidden" name="action" value="claim_player">
+        <select name="player_id" required>
+            <option value="">Choose your player</option>
+            {% for p in unclaimed_players %}
+            <option value="{{ p.id }}">{{ p.name }} — {{ p.position }} — {{ p.team }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Claim Player</button>
+    </form>
+    {% else %}
+    <p>No unclaimed players are currently available.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if team or player %}
+<section class="panel">
+    <h2>Account Connected</h2>
+    {% if team %}<p>Team: <strong>{{ team.name }}</strong></p>{% endif %}
+    {% if player %}<p>Player: <strong>{{ player.name }}</strong></p>{% endif %}
+    <a class="button" href="{{ next_url }}">Go to Dashboard</a>
+</section>
+{% endif %}
+
+{% endblock %}

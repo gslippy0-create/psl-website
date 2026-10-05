@@ -389,6 +389,145 @@ def player_dashboard(player):
 
 
 
+
+def _auto_link_discord_account(discord_id):
+    discord_user = session.get("discord_user") or {}
+    names = []
+    for key in ("username", "global_name"):
+        value = discord_user.get(key)
+        if value:
+            names.append(value.strip().lower())
+
+    if not names:
+        return
+
+    c = db()
+
+    # Automatically link an unclaimed manager/team when the Discord username
+    # exactly matches the PSL manager name.
+    team = c.execute(
+        "SELECT id FROM teams WHERE (discord_id IS NULL OR discord_id='') "
+        "AND lower(manager) IN (%s)" % ",".join(["?"] * len(names)),
+        tuple(names),
+    ).fetchone()
+
+    if team:
+        c.execute(
+            "UPDATE teams SET discord_id=? WHERE id=? AND (discord_id IS NULL OR discord_id='')",
+            (discord_id, team["id"]),
+        )
+        c.commit()
+
+    # Automatically link an unclaimed player when the Discord username or
+    # global name exactly matches the PSL player name.
+    player = c.execute(
+        "SELECT id FROM players WHERE (discord_id IS NULL OR discord_id='') "
+        "AND lower(name) IN (%s)" % ",".join(["?"] * len(names)),
+        tuple(names),
+    ).fetchone()
+
+    if player:
+        c.execute(
+            "UPDATE players SET discord_id=? WHERE id=? AND (discord_id IS NULL OR discord_id='')",
+            (discord_id, player["id"]),
+        )
+        c.commit()
+
+    c.close()
+
+
+@app.route("/claim", methods=["GET", "POST"])
+def claim():
+    discord_id = session.get("discord_id")
+    if not discord_id:
+        return redirect(url_for("login", next=url_for("claim")))
+
+    _auto_link_discord_account(discord_id)
+
+    c = db()
+    message = None
+    error = None
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "claim_team":
+            team_id = request.form.get("team_id")
+            if team_id:
+                already = c.execute(
+                    "SELECT discord_id FROM teams WHERE id=?", (team_id,)
+                ).fetchone()
+                if already and already["discord_id"] not in (None, ""):
+                    error = "That team has already been claimed."
+                else:
+                    c.execute(
+                        "UPDATE teams SET discord_id=? WHERE id=? AND (discord_id IS NULL OR discord_id='')",
+                        (discord_id, team_id),
+                    )
+                    c.commit()
+                    message = "Your team has been linked to Discord."
+
+        elif action == "claim_player":
+            player_id = request.form.get("player_id")
+            if player_id:
+                already = c.execute(
+                    "SELECT discord_id FROM players WHERE id=?", (player_id,)
+                ).fetchone()
+                if already and already["discord_id"] not in (None, ""):
+                    error = "That player has already been claimed."
+                else:
+                    c.execute(
+                        "UPDATE players SET discord_id=? WHERE id=? AND (discord_id IS NULL OR discord_id='')",
+                        (discord_id, player_id),
+                    )
+                    c.commit()
+                    message = "Your player has been linked to Discord."
+
+    team = c.execute(
+        "SELECT * FROM teams WHERE discord_id=?", (discord_id,)
+    ).fetchone()
+
+    player = c.execute(
+        "SELECT p.*, COALESCE(t.name,'Free Agent') team "
+        "FROM players p LEFT JOIN teams t ON t.id=p.team_id "
+        "WHERE p.discord_id=?",
+        (discord_id,),
+    ).fetchone()
+
+    unclaimed_teams = c.execute(
+        "SELECT id,name,manager FROM teams "
+        "WHERE discord_id IS NULL OR discord_id='' ORDER BY name"
+    ).fetchall()
+
+    unclaimed_players = c.execute(
+        "SELECT p.id,p.name,p.position,COALESCE(t.name,'Free Agent') team "
+        "FROM players p LEFT JOIN teams t ON t.id=p.team_id "
+        "WHERE p.discord_id IS NULL OR p.discord_id='' ORDER BY p.name"
+    ).fetchall()
+
+    c.close()
+
+    if team and player:
+        next_url = url_for("dashboard")
+    elif team:
+        next_url = url_for("manager_dashboard")
+    elif player:
+        next_url = url_for("player_dashboard")
+    else:
+        next_url = url_for("claim")
+
+    return render_template(
+        "claim.html",
+        team=team,
+        player=player,
+        unclaimed_teams=unclaimed_teams,
+        unclaimed_players=unclaimed_players,
+        message=message,
+        error=error,
+        next_url=next_url,
+    )
+
+
 @app.route("/dashboard")
 def dashboard():
     if session.get("admin"):
@@ -397,6 +536,8 @@ def dashboard():
     discord_id = session.get("discord_id")
     if not discord_id:
         return redirect(url_for("login", next=url_for("dashboard")))
+
+    _auto_link_discord_account(discord_id)
 
     c = db()
     team = c.execute(
@@ -417,7 +558,7 @@ def dashboard():
     if player:
         return redirect(url_for("player_dashboard"))
 
-    return "Your Discord account is not linked to a PSL manager or player yet. Ask the admin to link your Discord ID.", 403
+    return redirect(url_for("claim"))
 
 
 @app.route("/login",methods=["GET","POST"])
