@@ -1,0 +1,22 @@
+{% extends "base_accounts.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="login panel">
+<span class="eyebrow">JOIN PSL</span><h1>Create your account</h1>
+<p>Register directly on the website — Discord is not required.</p>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form class="form" method="post">
+<input name="username" placeholder="Username" minlength="3" maxlength="30" autocomplete="username" required>
+<input name="email" type="email" placeholder="Email address" autocomplete="email" required>
+<input name="password" type="password" placeholder="Password (8+ characters)" minlength="8" autocomplete="new-password" required>
+<input name="confirm_password" type="password" placeholder="Confirm password" minlength="8" autocomplete="new-password" required>
+<label for="team_id">Team</label>
+<select id="team_id" name="team_id">
+<option value="">Free Agent / No team yet</option>
+{% for team in teams %}<option value="{{ team.id }}">{{ team.name }}</option>{% endfor %}
+</select>
+<button type="submit">Register</button>
+</form>
+<p>Already registered? <a href="{{ url_for('login') }}">Login</a></p>
+</div>
+{% endblock %}

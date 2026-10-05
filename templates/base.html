@@ -1,15 +1,70 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{% block title %}PSL{% endblock %} | Pro Super League</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
-<body><header class="nav"><a class="brand" href="/"><img src="/static/psl-logo.png"><span>PSL</span></a>
-<nav><a href="/">Home</a><a href="/table">League</a><a href="/fixtures">Fixtures</a><a href="/teams">Teams</a><a href="/players">Players</a><a href="/transfers">Transfers</a><a href="/totw">TOTW</a>
-{% if logged_in %}
-<a class="gold" href="/admin">Admin</a>
-<a href="/logout">Logout</a>
-{% elif discord_logged_in %}
-<a class="gold" href="/dashboard">Dashboard</a>
-<a href="/logout">Logout</a>
-{% else %}
-<a class="gold" href="/login">Login</a>
+```html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}PSL{% endblock %} | Pro Super League</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="nav">
+
+<a class="brand" href="/">
+<img src="/static/psl-logo.png">
+<span>PSL</span>
+</a>
+
+<nav>
+<a href="/">Home</a>
+<a href="/table">League</a>
+<a href="/fixtures">Fixtures</a>
+<a href="/teams">Teams</a>
+<a href="/players">Players</a>
+<a href="/transfers">Transfers</a>
+<a href="/totw">TOTW</a>
+
+{% if session.get("user_id") or session.get("admin") or session.get("is_admin") %}
+
+<a href="/contracts">Contracts</a>
+<a href="/contract-offers">Offers</a>
+
+{% if session.get("user_id") %}
+<a href="/manager/contracts/offers">Manager</a>
+<a href="/account">Account</a>
 {% endif %}
-</nav></header>
-<main>{% block content %}{% endblock %}</main><footer>PSL • FC27 Pro Clubs League</footer></body></html>
+
+{% if session.get("admin") or session.get("is_admin") %}
+<a class="gold" href="/admin">Admin</a>
+{% endif %}
+
+<a href="/logout">Logout</a>
+
+{% elif discord_logged_in %}
+
+<a href="/contracts">Contracts</a>
+<a href="/dashboard">Dashboard</a>
+<a href="/logout">Logout</a>
+
+{% else %}
+
+<a class="gold" href="/login">Login</a>
+<a href="/register">Register</a>
+
+{% endif %}
+
+</nav>
+
+</header>
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<footer>PSL • FC27 Pro Clubs League</footer>
+
+</body>
+</html>
+```

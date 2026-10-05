@@ -1,30 +1,8 @@
-PSL WEBSITE V2
-
-Features:
-- Real calculated league table
-- Fixtures and results
-- Teams and squad pages
-- Player profiles and statistics
-- Transfers
-- Team of the Week
-- Admin login
-- JSON API endpoint for Discord result integration
-- PSL logo included
-
-WINDOWS:
-1. python -m venv .venv
-2. .venv\Scripts\activate
-3. pip install -r requirements.txt
-4. Set your environment variables (or use the defaults for local testing).
-5. python app.py
-6. Open http://127.0.0.1:5000
-
-IMPORTANT:
-Change PSL_ADMIN_PASSWORD, PSL_SECRET_KEY and PSL_API_KEY before putting the site online.
-
-DISCORD INTEGRATION:
-POST JSON to /api/results with header X-PSL-API-KEY.
-Example JSON:
-{"home":"Arsenal","away":"Wrexham","home_score":3,"away_score":1}
-
-For a public deployment, use HTTPS and a production WSGI server.
+1. Copy contract_offers.py and install_contract_offers.py into the same folder as app.py.
+2. Stop Flask.
+3. Run: python install_contract_offers.py
+4. Start Flask with: python -c "import app; app.app.run(host='127.0.0.1',port=5001,debug=False,use_reloader=False)"
+5. Manager page: http://127.0.0.1:5001/manager/contracts/offers
+6. Admin page:   http://127.0.0.1:5001/admin/contracts/offers
+7. Player page:  http://127.0.0.1:5001/contract-offers
+The patch creates contract_offers automatically and keeps the existing contracts/transfers data.

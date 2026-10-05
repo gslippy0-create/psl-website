@@ -1,0 +1,37 @@
+{% extends "base_accounts.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<section class="page-head"><span class="eyebrow">PSL PLAYER PROFILE</span><h1>{{ user.username }}</h1><p>{{ user.team_name or 'Free Agent' }}</p></section>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<section class="panel">
+<h2>Account details</h2>
+<form class="form" method="post">
+<label>Username</label><input name="username" value="{{ user.username }}" maxlength="30" required>
+<label>Email</label><input name="email" type="email" value="{{ user.email }}" required>
+<label>Team</label>
+<select name="team_id"><option value="">Free Agent / No team</option>{% for team in teams %}<option value="{{ team.id }}" {% if user.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>{% endfor %}</select>
+<button type="submit">Save profile</button>
+</form>
+</section>
+<section class="panel">
+<h2>Player profile</h2>
+<table>
+<tr><th>Player</th><td>{{ user.player_name or user.username }}</td></tr>
+<tr><th>Position</th><td>{{ user.position or 'Not set' }}</td></tr>
+<tr><th>Team</th><td>{{ user.team_name or 'Free Agent' }}</td></tr>
+<tr><th>Appearances</th><td>{{ user.appearances or 0 }}</td></tr>
+<tr><th>Goals</th><td>{{ user.goals or 0 }}</td></tr>
+<tr><th>Assists</th><td>{{ user.assists or 0 }}</td></tr>
+</table>
+{% if user.player_id %}<p><a class="button" href="{{ url_for('player', player_id=user.player_id) }}">View public player profile</a></p>{% endif %}
+</section>
+<section class="panel">
+<h2>Discord</h2>
+{% if user.discord_id %}
+<p>Discord is linked to this PSL account.</p>
+{% else %}
+<p>Discord is optional. Link it if you want to use the existing Discord/manager features with this account.</p>
+<a class="button" href="{{ url_for('auth_discord') }}">Link Discord</a>
+{% endif %}
+</section>
+{% endblock %}
