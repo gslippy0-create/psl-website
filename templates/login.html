@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="login panel">
+
+    <span class="eyebrow">PSL CONTROL CENTRE</span>
+    <h1>PSL Login</h1>
+
+    <p>Choose how you want to sign in.</p>
+
+    <div style="margin:25px 0;">
+        <a href="/auth/discord" class="button">
+            🔵 Manager / Player — Login with Discord
+        </a>
+    </div>
+
+    <p style="margin-top:15px;">
+        After Discord login, use the dashboard for your role.
+    </p>
+
+    <hr>
+
+    <h2>Admin Login</h2>
+
+    {% if error %}
+        <p class="error">{{error}}</p>
+    {% endif %}
+
+    <form class="form" method="post">
+        <input name="username" placeholder="Username" required>
+        <input name="password" type="password" placeholder="Password" required>
+        <button type="submit">Admin Sign in</button>
+    </form>
+
+</div>
+
+{% endblock %}

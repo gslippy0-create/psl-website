@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="page-head">
+    <span class="eyebrow">PSL MANAGER AREA</span>
+    <h1>{{ team.name }}</h1>
+    <p>Manager: <strong>{{ team.manager }}</strong></p>
+</section>
+
+<section class="panel">
+    <h2>Your Squad</h2>
+
+    {% if players %}
+    <table>
+        <tr>
+            <th>Player</th>
+            <th>Position</th>
+            <th>Apps</th>
+            <th>Goals</th>
+            <th>Assists</th>
+        </tr>
+        {% for p in players %}
+        <tr>
+            <td><b>{{ p.name }}</b></td>
+            <td>{{ p.position }}</td>
+            <td>{{ p.appearances }}</td>
+            <td>{{ p.goals }}</td>
+            <td>{{ p.assists }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Your team has no players yet.</p>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Free Agents</h2>
+
+    {% if free_agents %}
+    <table>
+        <tr>
+            <th>Player</th>
+            <th>Position</th>
+            <th>Action</th>
+        </tr>
+        {% for p in free_agents %}
+        <tr>
+            <td><b>{{ p.name }}</b></td>
+            <td>{{ p.position }}</td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="action" value="sign_player">
+                    <input type="hidden" name="player_id" value="{{ p.id }}">
+                    <button type="submit">Sign Player</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No free agents are currently available.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

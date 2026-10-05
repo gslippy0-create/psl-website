@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="page-head">
+    <span class="eyebrow">PSL PLAYER AREA</span>
+    <h1>{{ player.name }}</h1>
+    <p>{{ player.position }}{% if player.team %} · {{ player.team }}{% endif %}</p>
+</section>
+
+<section class="panel">
+    <h2>Player Profile</h2>
+    <table>
+        <tr><th>Player</th><td>{{ player.name }}</td></tr>
+        <tr><th>Position</th><td>{{ player.position }}</td></tr>
+        <tr><th>Team</th><td>{{ player.team }}</td></tr>
+        <tr><th>Manager</th><td>{{ player.manager or '—' }}</td></tr>
+        <tr><th>Appearances</th><td>{{ player.appearances }}</td></tr>
+        <tr><th>Goals</th><td>{{ player.goals }}</td></tr>
+        <tr><th>Assists</th><td>{{ player.assists }}</td></tr>
+    </table>
+</section>
+
+<section class="panel">
+    <h2>Transfer History</h2>
+    {% if transfers %}
+    <table>
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Date</th>
+        </tr>
+        {% for tr in transfers %}
+        <tr>
+            <td>{{ tr.from_team }}</td>
+            <td>{{ tr.to_team }}</td>
+            <td>{{ tr.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No transfers recorded.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block title %}Fixtures{% endblock %}{% block content %}
+<section class="page-head"><span class="eyebrow">PSL MATCH CENTRE</span><h1>Fixtures & Results</h1></section>
+<section class="panel">
+{% set current_round = namespace(value=None) %}
+{% for f in fixtures %}
+  {% if f.round_no != current_round.value %}
+    {% set current_round.value = f.round_no %}
+    <h2 style="margin-top:24px">Round {{ f.round_no or 'TBC' }}</h2>
+  {% endif %}
+  <div class="fixture">
+    <div><small>{{ f.scheduled or 'Date TBC' }}</small><b>{{ f.home }}</b></div>
+    <strong>{% if f.status=='played' %}{{ f.home_score }} - {{ f.away_score }}{% else %}VS{% endif %}</strong>
+    <div class="away"><small>{{ f.status|upper }}</small><b>{{ f.away }}</b></div>
+    {% if session.get('admin') and f.status != 'played' %}
+    <form method="post" action="{{ url_for('fixtures') }}" style="display:flex;gap:6px;align-items:center;margin-left:12px">
+      <input type="hidden" name="fixture_id" value="{{ f.id }}">
+      <input type="number" name="home_score" min="0" placeholder="H" required style="width:55px">
+      <input type="number" name="away_score" min="0" placeholder="A" required style="width:55px">
+      <button type="submit">Record</button>
+    </form>
+    {% endif %}
+  </div>
+{% else %}<p class="muted">No fixtures yet.</p>{% endfor %}
+</section>{% endblock %}
