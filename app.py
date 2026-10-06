@@ -822,7 +822,7 @@ def _contract_add_months(d, months):
     y=d.year+(d.month-1+months)//12; m=(d.month-1+months)%12+1
     return date(y,m,min(d.day,calendar.monthrange(y,m)[1]))
 
-_contracts_table()
+init_db()
 
 @app.route('/contracts')
 def contracts_public():
@@ -886,8 +886,6 @@ def admin_contracts():
     rows=c.execute("""SELECT co.*,p.name player,t.name team FROM contracts co JOIN players p ON p.id=co.player_id JOIN teams t ON t.id=co.team_id ORDER BY co.id DESC""").fetchall(); c.close()
     return render_template_string("""<!doctype html><html><head><meta charset='utf-8'><title>Admin Contracts</title><style>body{font-family:Arial;background:#111;color:#eee;padding:25px}.wrap{max-width:1200px;margin:auto}.card{background:#1b1b1b;border:1px solid #333;border-radius:14px;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #333;text-align:left}a{color:#7dd3fc}</style></head><body><div class='wrap'><h1>PSL Contract Administration</h1><div class='card'><table><tr><th>ID</th><th>Player</th><th>Team</th><th>Start</th><th>End</th><th>Length</th><th>Fee</th><th>Status</th></tr>{% for r in rows %}<tr><td>{{r.id}}</td><td>{{r.player}}</td><td>{{r.team}}</td><td>{{r.start_date}}</td><td>{{r.end_date}}</td><td>{{r.duration_months}}m</td><td>£{{'%.2f'|format(r.transfer_fee or 0)}}</td><td>{{r.status}}</td></tr>{% else %}<tr><td colspan='8'>No contracts yet.</td></tr>{% endfor %}</table></div><p><a href='/admin'>Back to admin</a></p></div></body></html>""",rows=rows)
 # ===== END PSL_CONTRACTS_PATCH_V1 =====
-
-import contract_offers
 
 if __name__=="__main__":
     init_db()
