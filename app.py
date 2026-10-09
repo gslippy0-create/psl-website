@@ -590,13 +590,33 @@ def register():
             error = "That email is already registered."
         else:
             team = c.execute("SELECT id,name FROM teams WHERE id=?", (team_id,)).fetchone() if team_id else None
-            c.execute("INSERT INTO users(username,email,password_hash,team_id) VALUES(?,?,?,?)",
-                      (username, email, generate_password_hash(password), team["id"] if team else None))
-            user_id = c.execute("SELECT id FROM users WHERE lower(username)=lower(?)", (username,)).fetchone()["id"]
-            # Every website account gets a PSL player profile. Existing Discord-linked players can be linked later.
-            c.execute("INSERT INTO players(name,position,team_id) VALUES(?,?,?)", (username, "", team["id"] if team else None))
-            player_id = c.execute("SELECT id FROM players WHERE name=? ORDER BY id DESC LIMIT 1", (username,)).fetchone()["id"]
-            c.execute("UPDATE users SET player_id=? WHERE id=?", (player_id, user_id))
+            # Reuse an existing PSL player whose name matches this username.
+            # This restores account access without creating a duplicate player.
+            existing_player = c.execute(
+                "SELECT id, team_id FROM players WHERE lower(name)=lower(?) ORDER BY id LIMIT 1",
+                (username,)
+            ).fetchone()
+            if existing_player:
+                player_id = existing_player["id"]
+                linked_team_id = existing_player["team_id"]
+            else:
+                c.execute(
+                    "INSERT INTO players(name,position,team_id) VALUES(?,?,?)",
+                    (username, "", team["id"] if team else None)
+                )
+                player_id = c.execute(
+                    "SELECT id FROM players WHERE lower(name)=lower(?) ORDER BY id DESC LIMIT 1",
+                    (username,)
+                ).fetchone()["id"]
+                linked_team_id = team["id"] if team else None
+
+            c.execute(
+                "INSERT INTO users(username,email,password_hash,team_id,player_id) VALUES(?,?,?,?,?)",
+                (username, email, generate_password_hash(password), linked_team_id, player_id)
+            )
+            user_id = c.execute(
+                "SELECT id FROM users WHERE lower(username)=lower(?)", (username,)
+            ).fetchone()["id"]
             c.commit()
             c.close()
             session.clear()
