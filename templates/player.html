@@ -1,4 +1,47 @@
 {% extends "base.html" %}{% block title %}{{player.name}}{% endblock %}{% block content %}
 <section class="player-hero"><div class="crest bigcrest">{{player.name[:2].upper()}}</div><div><span class="section-kicker">PSL PLAYER</span><h1>{{player.name}}</h1><p>{{player.position or 'Player'}} · {{player.team}}</p><a class="button button-primary" href="{{ url_for('career_player',player_id=player.id) }}">View full career <span>↗</span></a></div></section>
 <section class="stats stats-modern"><div class="stat-item"><span class="stat-label">Appearances</span><b>{{player.appearances or 0}}</b><span class="stat-foot">CAREER TOTAL</span></div><div class="stat-item"><span class="stat-label">Goals</span><b>{{player.goals or 0}}</b><span class="stat-foot">CAREER TOTAL</span></div><div class="stat-item"><span class="stat-label">Assists</span><b>{{player.assists or 0}}</b><span class="stat-foot">CAREER TOTAL</span></div><div class="stat-item"><span class="stat-label">Current club</span><b style="font-size:24px">{{player.team}}</b><span class="stat-foot">PSL SQUAD</span></div></section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <span class="panel-label">FC27 MATCH DATA</span>
+      <h3>Recent performances</h3>
+    </div>
+  </div>
+  {% for stat in performances %}
+  <div class="transfer">
+    <div style="width:100%">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <b>{{ stat.player_name or player.name }}</b>
+        <span class="muted">{{ stat.created_at }}</span>
+      </div>
+      <p class="muted" style="margin:6px 0 12px">
+        {{ stat.team or player.team }}{% if stat.position %} · {{ stat.position }}{% endif %}
+        {% if stat.match_rating %} · Rating: {{ stat.match_rating }}{% endif %}
+      </p>
+      <div class="stats stats-modern">
+        {% for label, value in [
+          ('Goals', stat.goals), ('Assists', stat.assists),
+          ('Shots', stat.shots), ('Shot accuracy', stat.shot_accuracy),
+          ('Passes', stat.passes), ('Pass accuracy', stat.pass_accuracy),
+          ('Dribbles', stat.dribbles), ('Tackles', stat.tackles),
+          ('Interceptions', stat.interceptions), ('Minutes', stat.minutes)
+        ] %}
+          {% if value %}
+          <div class="stat-item">
+            <span class="stat-label">{{ label }}</span>
+            <b>{{ value }}</b>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if stat.notes %}<p>{{ stat.notes }}</p>{% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-state">No FC27 performance screenshots have been synced for this player yet.</p>
+  {% endfor %}
+</section>
+
 <section class="panel"><div class="panel-head"><div><span class="panel-label">CLUB JOURNEY</span><h3>Transfer history</h3></div></div>{% for t in transfers %}<div class="transfer"><div><b>{{t.from_team or 'Free Agent'}} → {{t.to_team}}</b><br><span class="muted">{{t.created_at}}</span></div></div>{% else %}<p class="empty-state">No transfers recorded yet.</p>{% endfor %}</section>{% endblock %}
