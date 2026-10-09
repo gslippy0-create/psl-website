@@ -234,13 +234,29 @@ def current_user():
 
 
 def send_password_reset_email(email, reset_url):
-    host = os.getenv("PSL_SMTP_HOST")
-    port = int(os.getenv("PSL_SMTP_PORT", "587"))
-    username = os.getenv("PSL_SMTP_USER")
-    password = os.getenv("PSL_SMTP_PASSWORD")
-    sender = os.getenv("PSL_SMTP_FROM", username or "")
-    if not host or not sender:
-        return False, "Password reset email is not configured yet. Add the PSL_SMTP_* settings on Render."
+    """Send a password-reset email and log failures without exposing credentials."""
+    host = (os.getenv("PSL_SMTP_HOST") or "").strip()
+    username = (os.getenv("PSL_SMTP_USER") or "").strip()
+    password = os.getenv("PSL_SMTP_PASSWORD") or ""
+    sender = (os.getenv("PSL_SMTP_FROM") or username).strip()
+    try:
+        port = int(os.getenv("PSL_SMTP_PORT", "587"))
+    except (TypeError, ValueError):
+        app.logger.error("Password reset SMTP configuration invalid: PSL_SMTP_PORT must be a number")
+        return False, "Password reset email is not configured correctly. Please contact the PSL administrator."
+
+    missing = []
+    if not host:
+        missing.append("PSL_SMTP_HOST")
+    if not username:
+        missing.append("PSL_SMTP_USER")
+    if not password:
+        missing.append("PSL_SMTP_PASSWORD")
+    if not sender:
+        missing.append("PSL_SMTP_FROM")
+    if missing:
+        app.logger.error("Password reset SMTP configuration incomplete; missing: %s", ", ".join(missing))
+        return False, "Password reset email is not configured correctly. Please contact the PSL administrator."
 
     msg = EmailMessage()
     msg["Subject"] = "PSL password reset"
@@ -252,14 +268,19 @@ def send_password_reset_email(email, reset_url):
         "This link expires after 30 minutes. If you did not request this, you can ignore this email."
     )
     try:
-        with smtplib.SMTP(host, port, timeout=15) as smtp:
+        with smtplib.SMTP(host, port, timeout=20) as smtp:
+            smtp.ehlo()
             smtp.starttls()
-            if username and password:
-                smtp.login(username, password)
-            smtp.send_message(msg)
-        return True, "Password reset instructions have been emailed to you."
-    except Exception as exc:
-        app.logger.exception("Password reset email failed")
+            smtp.ehlo()
+            smtp.login(username, password)
+            refused = smtp.send_message(msg)
+        if refused:
+            app.logger.error("Password reset email was refused for one or more recipients")
+            return False, "We could not send the reset email right now. Please try again later."
+        app.logger.info("Password reset email accepted by SMTP server")
+        return True, "Password reset instructions have been emailed to you. Check your inbox and spam folder."
+    except Exception:
+        app.logger.exception("Password reset email failed during SMTP connection, authentication, or delivery")
         return False, "We could not send the reset email right now. Please try again later."
 
 @app.context_processor
@@ -594,16 +615,23 @@ def forgot_password():
         c = db()
         user = c.execute("SELECT id,email FROM users WHERE lower(email)=lower(?)", (email,)).fetchone()
         c.close()
-        # Do not reveal whether an account exists.
+        # Keep the public response generic to avoid revealing whether an account exists,
+        # but log the branch so administrators can diagnose why no email was sent.
         if user:
+            app.logger.info("Password reset requested for a registered account")
             token = account_serializer().dumps({"user_id": user["id"], "email": user["email"]})
             reset_url = url_for("reset_password", token=token, _external=True)
+            # Railway serves the public site over HTTPS; ensure reset links use HTTPS
+            # even if the internal proxy connection is HTTP.
+            if request.host.endswith(".up.railway.app") and reset_url.startswith("http://"):
+                reset_url = "https://" + reset_url[len("http://"):]
             ok, msg = send_password_reset_email(user["email"], reset_url)
             if not ok:
                 error = msg
             else:
                 message = msg
         else:
+            app.logger.warning("Password reset requested but no matching account was found; no email sent")
             message = "If an account exists for that email, reset instructions have been sent."
     return render_template("forgot_password.html", message=message, error=error)
 
