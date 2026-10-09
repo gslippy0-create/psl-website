@@ -1,70 +1,52 @@
-```html
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{% block title %}PSL{% endblock %} | Pro Super League</title>
+<meta name="theme-color" content="#10130f">
+<meta name="description" content="PSL — the home of competitive Pro Clubs football. Fixtures, results, league tables, squads and player careers.">
+<title>{% block title %}Home{% endblock %} | PSL — Pro Super League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-
-<header class="nav">
-
-<a class="brand" href="/">
-<img src="/static/psl-logo.png">
-<span>PSL</span>
-</a>
-
-<nav>
-<a href="/">Home</a>
-<a href="/table">League</a>
-<a href="/fixtures">Fixtures</a>
-<a href="/teams">Teams</a>
-<a href="/players">Players</a>
-<a href="/transfers">Transfers</a>
-<a href="/totw">TOTW</a>
-
-{% if session.get("user_id") or session.get("admin") or session.get("is_admin") %}
-
-<a href="/contracts">Contracts</a>
-<a href="/contract-offers">Offers</a>
-
-{% if session.get("user_id") %}
-<a href="/manager/contracts/offers">Manager</a>
-<a href="/account">Account</a>
-{% endif %}
-
-{% if session.get("admin") or session.get("is_admin") %}
-<a class="gold" href="/admin">Admin</a>
-{% endif %}
-
-<a href="/logout">Logout</a>
-
-{% elif discord_logged_in %}
-
-<a href="/contracts">Contracts</a>
-<a href="/dashboard">Dashboard</a>
-<a href="/logout">Logout</a>
-
-{% else %}
-
-<a class="gold" href="/login">Login</a>
-<a href="/register">Register</a>
-
-{% endif %}
-
-</nav>
-
+<div class="topline"><span class="live-dot"></span> THE HOME OF COMPETITIVE PRO CLUBS <span class="topline-divider">/</span> PSL SEASON HUB</div>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="PSL home">
+    <img src="{{ url_for('static', filename='psl-logo.png') }}" alt="PSL logo">
+    <span class="brand-wordmark"><strong>PSL</strong><small>PRO SUPER LEAGUE</small></span>
+  </a>
+  <input class="nav-toggle" type="checkbox" id="nav-toggle" aria-label="Toggle navigation">
+  <label class="nav-toggle-label" for="nav-toggle"><span></span><span></span><span></span></label>
+  <nav class="main-nav" aria-label="Main navigation">
+    <a class="{% if request.path == '/' %}active{% endif %}" href="/">Overview</a>
+    <a class="{% if request.path.startswith('/table') %}active{% endif %}" href="/table">League</a>
+    <a class="{% if request.path.startswith('/fixtures') %}active{% endif %}" href="/fixtures">Fixtures</a>
+    <a class="{% if request.path.startswith('/teams') or request.path.startswith('/team/') %}active{% endif %}" href="/teams">Clubs</a>
+    <a class="{% if request.path.startswith('/players') or request.path.startswith('/player/') %}active{% endif %}" href="/players">Players</a>
+    <a class="{% if request.path.startswith('/transfers') or request.path.startswith('/transfer-market') %}active{% endif %}" href="/transfer-market">Market</a>
+    <a class="{% if request.path.startswith('/career') %}active{% endif %}" href="/career">Careers</a>
+    <a class="{% if request.path.startswith('/match-centre') %}active{% endif %}" href="/match-centre">Match Centre</a>
+    <a class="{% if request.path.startswith('/club-management') %}active{% endif %}" href="/club-management">Club Mgmt</a>
+    <a class="{% if request.path.startswith('/totw') %}active{% endif %}" href="/totw">Team of the Week</a>
+    {% if session.get("user_id") or session.get("admin") or session.get("is_admin") %}
+      <a href="/contracts">Contracts</a><a href="/contract-offers">Offers</a>
+      {% if session.get("user_id") %}<a href="/manager/contracts/offers">Manager</a><a href="/account">Account</a>{% endif %}
+      {% if session.get("admin") or session.get("is_admin") %}<a class="nav-admin" href="/admin">Admin</a><a href="/admin/career-stats">Career Stats</a><a href="/admin/contracts/offers">Offer Admin</a>{% endif %}
+      <a class="nav-cta" href="/logout">Log out</a>
+    {% elif discord_logged_in %}
+      <a href="/contracts">Contracts</a><a href="/dashboard">Dashboard</a><a class="nav-cta" href="/logout">Log out</a>
+    {% else %}
+      <a class="nav-login" href="/login">Log in</a><a class="nav-cta" href="/register">Join PSL <span>↗</span></a>
+    {% endif %}
+  </nav>
 </header>
-
-<main>
+<div class="ticker"><div class="ticker-inner"><span>PSL</span> BUILT FOR THE CLUBS <b>✦</b> EVERY MATCH MATTERS <b>✦</b> YOUR CLUB. YOUR LEGACY. <b>✦</b> PSL <b>✦</b> BUILT FOR THE CLUBS <b>✦</b> EVERY MATCH MATTERS <b>✦</b></div></div>
+<main class="page-shell">
 {% block content %}{% endblock %}
 </main>
-
-<footer>PSL • FC27 Pro Clubs League</footer>
-
+<footer class="site-footer"><a class="footer-brand" href="/">PSL<span>.</span></a><span>PRO SUPER LEAGUE · BUILT FOR THE CLUBS</span><a href="/table">League standings ↑</a></footer>
 </body>
 </html>
-```

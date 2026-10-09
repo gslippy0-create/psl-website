@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Player Careers{% endblock %}{% block content %}
+<section class="page-head"><span class="section-kicker">THE PEOPLE BEHIND THE BADGES</span><h1>PLAYER <em>CAREERS.</em></h1><p>Track the numbers, follow the journey and see who is making their mark in PSL.</p></section>
+<section class="panel"><div class="panel-head"><div><span class="panel-label">CAREER LEADERBOARD</span><h3>Players to watch</h3></div><span class="panel-icon">✳</span></div>
+<div class="table-scroll"><table><thead><tr><th>Player</th><th>Club</th><th>Apps</th><th>Goals</th><th>Assists</th><th>Goals / app</th><th></th></tr></thead><tbody>
+{% for p in players %}<tr><td><a href="{{ url_for('career_player',player_id=p.id) }}"><b>{{ p.name }}</b></a><br><span class="muted">{{ p.position or 'Player' }}</span></td><td>{{ p.team }}</td><td>{{ p.appearances or 0 }}</td><td class="points-cell">{{ p.goals or 0 }}</td><td>{{ p.assists or 0 }}</td><td>{{ p.goals_per_app }}</td><td><a class="text-link" href="{{ url_for('career_player',player_id=p.id) }}">Career ↗</a></td></tr>
+{% else %}<tr><td colspan="7" class="empty-state">No player profiles yet.</td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}

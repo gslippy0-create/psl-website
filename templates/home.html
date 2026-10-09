@@ -1,8 +1,52 @@
-{% extends "base.html" %}{% block title %}Home{% endblock %}{% block content %}
-<section class="hero"><div><span class="eyebrow">FC27 PRO CLUBS LEAGUE</span><h1>PRO SUPER<br><strong>LEAGUE</strong></h1><p>The home of PSL league tables, fixtures, squads, transfers, statistics and Team of the Week.</p><a class="button" href="/table">View League Table</a></div><img class="hero-logo" src="/static/psl-logo.png"></section>
-<section class="stats">{% for n,label in [(counts[0],'Teams'),(counts[1],'Players'),(counts[2],'Results'),('FC27','Season')] %}<div><b>{{n}}</b><span>{{label}}</span></div>{% endfor %}</section>
-<div class="grid two"><section class="panel"><div class="panel-head"><h2>League</h2><a href="/table">Full table →</a></div><table><tr><th>#</th><th>Team</th><th>P</th><th>GD</th><th>PTS</th></tr>{% for r in table %}<tr><td>{{loop.index}}</td><td>{{r.team}}</td><td>{{r.played}}</td><td>{{"%+d"|format(r.gd)}}</td><td><b>{{r.points}}</b></td></tr>{% endfor %}</table></section>
-<section class="panel"><div class="panel-head"><h2>Latest Results</h2><a href="/fixtures">All →</a></div>{% for r in recent %}<div class="result"><span>{{r.home}}</span><strong>{{r.home_score}} - {{r.away_score}}</strong><span>{{r.away}}</span></div>{% else %}<p class="muted">No results yet.</p>{% endfor %}</section></div>
-<div class="grid two"><section class="panel"><h2>Upcoming Fixtures</h2>{% for r in upcoming %}<div class="result"><span>{{r.home}}</span><strong>VS</strong><span>{{r.away}}</span></div>{% else %}<p class="muted">No fixtures yet.</p>{% endfor %}</section>
-<section class="panel"><h2>Top Players</h2>{% for p in top %}<div class="player-row"><span><b>{{p.name}}</b><small>{{p.team}}</small></span><strong>{{p.goals}} G / {{p.assists}} A</strong></div>{% else %}<p class="muted">No players yet.</p>{% endfor %}</section></div>
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <div class="section-kicker"><span class="live-dot"></span> THE NEXT CHAPTER STARTS HERE</div>
+    <h1>THIS IS<br>YOUR <em>LEAGUE.</em></h1>
+    <p class="hero-lede">More than a result. More than a club. This is where your season takes shape. Follow every fixture, climb the table and build your legacy in PSL.</p>
+    <div class="hero-actions"><a class="button button-primary" href="/table">Explore the league <span>↗</span></a><a class="button button-ghost" href="/fixtures">View match centre <span>→</span></a></div>
+    <div class="hero-proof"><div class="proof-avatars"><span>PS</span><span>FC</span><span>27</span></div><span>ONE LEAGUE. EVERY CLUB HAS A STORY.</span></div>
+  </div>
+  <div class="hero-art">
+    <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+    <div class="hero-number">01<span>/ PSL</span></div>
+    <img class="hero-logo" src="{{ url_for('static', filename='psl-logo.png') }}" alt="PSL crest">
+    <div class="hero-stamp"><span>PLAY</span><span>COMPETE</span><span>RISE</span></div>
+    <div class="hero-caption"><span>PRO SUPER LEAGUE</span><b>THE CLUBS. THE PLAYERS. THE GLORY.</b></div>
+  </div>
+</section>
+<section class="stats stats-modern">
+  {% for n,label in [(counts[0],'Clubs competing'),(counts[1],'Players registered'),(counts[2],'Matches completed'),('FC27','Season platform')] %}
+  <div class="stat-item"><span class="stat-label">{{ label }}</span><b>{{ n }}</b><span class="stat-foot"><i></i> PSL SEASON HUB</span></div>
+  {% endfor %}
+</section>
+<section class="content-section">
+  <div class="section-heading"><div><span class="section-kicker">THE COMPETITION</span><h2>THE <em>TABLE.</em></h2></div><a class="text-link" href="/table">Full standings <span>↗</span></a></div>
+  <div class="grid two feature-grid">
+    <section class="panel table-panel"><div class="panel-head"><div><span class="panel-label">SEASON OVERVIEW</span><h3>League standings</h3></div><span class="panel-icon">↗</span></div>
+      <div class="table-scroll"><table><thead><tr><th>#</th><th>Club</th><th>P</th><th>GD</th><th>PTS</th></tr></thead><tbody>
+      {% for r in table %}<tr><td class="rank-cell">{{ "%02d"|format(loop.index) }}</td><td class="team-cell"><span class="mini-crest">{{ r.team[:2].upper() }}</span><b>{{ r.team }}</b></td><td>{{ r.played }}</td><td>{{ "%+d"|format(r.gd) }}</td><td class="points-cell">{{ r.points }}</td></tr>{% else %}<tr><td colspan="5" class="empty-state">Standings will appear here once the league has started.</td></tr>{% endfor %}
+      </tbody></table></div>
+      <a class="panel-bottom-link" href="/table">View complete standings <span>→</span></a>
+    </section>
+    <section class="panel results-panel"><div class="panel-head"><div><span class="panel-label">ON THE PITCH</span><h3>Latest results</h3></div><span class="panel-icon">⚽</span></div>
+      <div class="match-list">{% for r in recent %}<div class="match-card"><div class="match-team home-team"><span class="mini-crest">{{ r.home[:2].upper() }}</span><b>{{ r.home }}</b></div><div class="match-score"><strong>{{ r.home_score }} <i>:</i> {{ r.away_score }}</strong><small>FULL TIME</small></div><div class="match-team away-team"><b>{{ r.away }}</b><span class="mini-crest">{{ r.away[:2].upper() }}</span></div></div>{% else %}<div class="empty-match"><span class="empty-ball">⚽</span><b>The next result is waiting to be written.</b><p>Completed fixtures will appear here.</p></div>{% endfor %}</div>
+      <a class="panel-bottom-link" href="/fixtures">All fixtures & results <span>→</span></a>
+    </section>
+  </div>
+</section>
+<section class="content-section">
+  <div class="section-heading"><div><span class="section-kicker">BEYOND THE 90</span><h2>THE PEOPLE <em>BEHIND IT.</em></h2></div><a class="text-link" href="/players">Meet the players <span>↗</span></a></div>
+  <div class="grid two feature-grid">
+    <section class="panel upcoming-panel"><div class="panel-head"><div><span class="panel-label">NEXT UP</span><h3>Upcoming fixtures</h3></div><span class="panel-icon">◷</span></div>
+    {% for r in upcoming %}<div class="upcoming-row"><div class="upcoming-date"><b>{{ r.scheduled or 'TBC' }}</b><small>FIXTURE</small></div><div class="upcoming-teams"><span>{{ r.home }}</span><small>VS</small><span>{{ r.away }}</span></div><span class="upcoming-arrow">↗</span></div>{% else %}<p class="empty-state">Upcoming fixtures will show here when scheduled.</p>{% endfor %}
+    <a class="panel-bottom-link" href="/fixtures">Open match centre <span>→</span></a></section>
+    <section class="panel players-panel"><div class="panel-head"><div><span class="panel-label">MAKING THEIR MARK</span><h3>Players to watch</h3></div><span class="panel-icon">✳</span></div>
+    {% for p in top %}<a class="player-row player-row-modern" href="/player/{{ p.id }}"><span class="player-avatar">{{ p.name[:1].upper() }}</span><span class="player-details"><b>{{ p.name }}</b><small>{{ p.team or 'Free agent' }}</small></span><span class="player-contribution"><b>{{ p.goals }}</b><small>GOALS</small><b>{{ p.assists }}</b><small>ASSISTS</small></span><span class="upcoming-arrow">↗</span></a>{% else %}<p class="empty-state">Player highlights will appear as stats are recorded.</p>{% endfor %}
+    <a class="panel-bottom-link" href="/players">Explore player profiles <span>→</span></a></section>
+  </div>
+</section>
+<section class="join-banner"><div><span class="section-kicker">YOUR STORY STARTS HERE</span><h2>READY TO MAKE<br><em>YOUR MARK?</em></h2></div><div class="join-copy"><p>Join the PSL community and take your place in the league.</p><a class="button button-primary" href="/register">Get involved <span>↗</span></a></div><div class="join-watermark">PSL</div></section>
 {% endblock %}
