@@ -909,8 +909,8 @@ def api_result():
     if home_score < 0 or away_score < 0:
         return jsonify(error="Scores cannot be negative"), 400
     c = db()
-    h = c.execute("SELECT id FROM teams WHERE lower(name)=lower(?)", (home_name,)).fetchone()
-    a = c.execute("SELECT id FROM teams WHERE lower(name)=lower(?)", (away_name,)).fetchone()
+        h = c.execute("SELECT id, name FROM teams WHERE lower(trim(name))=lower(trim(?))", (home_name,)).fetchone()
+    a = c.execute("SELECT id, name FROM teams WHERE lower(trim(name))=lower(trim(?))", (away_name,)).fetchone()
     if not h or not a:
         c.close()
         return jsonify(error="Team not found"), 404
