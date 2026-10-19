@@ -914,7 +914,6 @@ def api_result():
     if not h or not a:
         c.close()
         return jsonify(error="Team not found"), 404
-        return jsonify(error="Team not found"), 404
     fixture = c.execute("SELECT id FROM fixtures WHERE status='scheduled' AND home_id=? AND away_id=? ORDER BY id LIMIT 1", (h["id"], a["id"])).fetchone()
     if fixture:
         fid = fixture["id"]
