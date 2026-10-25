@@ -828,8 +828,8 @@ def admin():
             # Existing played results are never deleted or changed. Missing pairs
             # are added; unscheduled placeholder entries can be given kick-off times.
             teams_for_schedule = c.execute("SELECT id, name FROM teams ORDER BY id").fetchall()
-            if len(teams_for_schedule) != 10:
-                fixture_notice = f"No fixtures were changed: this database has {len(teams_for_schedule)} teams; exactly 10 are required."
+            if len(teams_for_schedule) < 2:
+                fixture_notice = f"No fixtures were changed: this database has {len(teams_for_schedule)} teams; at least 2 are required."
             else:
                 ids = [int(t["id"]) for t in teams_for_schedule]
                 by_clean_name = {}
@@ -909,10 +909,11 @@ def admin():
                     if index % 2 == 1:
                         match_date += timedelta(days=2 if match_date.weekday() == 0 else 5)
 
-                fixture_notice = (f"Fixture schedule applied: {created} new fixtures added, "
+                total_fixtures = len(ids) * (len(ids) - 1)
+                fixture_notice = (f"Fixture schedule applied for {len(ids)} teams: {created} new fixtures added, "
                                   f"{rescheduled} existing unplayed fixtures scheduled, and "
                                   f"{preserved} existing fixtures/results preserved. "
-                                  f"The full season contains 90 home-and-away fixtures.")
+                                  f"A full home-and-away season contains {total_fixtures} fixtures.")
         elif a=="generate_fixtures":
             teams_for_schedule = c.execute("SELECT id, name FROM teams ORDER BY id").fetchall()
             if len(teams_for_schedule) == 10:
