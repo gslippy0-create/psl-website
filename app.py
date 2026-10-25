@@ -1,7 +1,7 @@
 import os, sqlite3, secrets, smtplib
 from functools import wraps
 from pathlib import Path
-from datetime import date
+from datetime import date, timedelta
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, session, jsonify, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
@@ -799,6 +799,7 @@ def logout():
 @admin_required
 def admin():
     c=db()
+    fixture_notice = None
     if request.method=="POST":
         a=request.form["action"]
         if a=="team":
@@ -822,6 +823,96 @@ def admin():
                     if not exists:
                         c.execute("INSERT INTO fixtures(home_id,away_id,scheduled) VALUES(?,?,?)",
                                   (home_id, away_id, request.form.get("scheduled", "")))
+        elif a=="generate_scheduled_fixtures":
+            # Create the uploaded double round-robin schedule in the current DB.
+            # Existing played results are never deleted or changed. Missing pairs
+            # are added; unscheduled placeholder entries can be given kick-off times.
+            teams_for_schedule = c.execute("SELECT id, name FROM teams ORDER BY id").fetchall()
+            if len(teams_for_schedule) != 10:
+                fixture_notice = f"No fixtures were changed: this database has {len(teams_for_schedule)} teams; exactly 10 are required."
+            else:
+                ids = [int(t["id"]) for t in teams_for_schedule]
+                by_clean_name = {}
+                for team in teams_for_schedule:
+                    clean = " ".join(str(team["name"]).casefold().replace(".", " ").split())
+                    parts = clean.split()
+                    while parts and parts[-1] in ("fc", "afc"):
+                        parts.pop()
+                    by_clean_name[" ".join(parts)] = int(team["id"])
+
+                def requested_team_id(name):
+                    clean = " ".join(name.casefold().replace(".", " ").split())
+                    parts = clean.split()
+                    while parts and parts[-1] in ("fc", "afc"):
+                        parts.pop()
+                    key = " ".join(parts)
+                    if key in by_clean_name:
+                        return by_clean_name[key]
+                    aliases = {
+                        "west ham united": ("west ham",),
+                        "oldham athletic": ("oldham",),
+                        "sunderland": ("sunderland afc",),
+                    }
+                    for alias in aliases.get(key, ()):
+                        if alias in by_clean_name:
+                            return by_clean_name[alias]
+                    return None
+
+                first_leg = []
+                for i in range(len(ids)):
+                    for j in range(i + 1, len(ids)):
+                        first_leg.append((ids[i], ids[j]))
+
+                requested = []
+                for home_name, away_name in (("Oldham Athletic", "West Ham United"), ("Oldham Athletic", "Sunderland")):
+                    home_id = requested_team_id(home_name)
+                    away_id = requested_team_id(away_name)
+                    pair = (home_id, away_id)
+                    reverse_pair = (away_id, home_id)
+                    if home_id is not None and away_id is not None and pair not in requested:
+                        # Keep exactly one first-leg pairing per opponent pair,
+                        # while honoring the requested home/away direction.
+                        existing_orientation = pair if pair in first_leg else reverse_pair if reverse_pair in first_leg else None
+                        if existing_orientation is not None:
+                            first_leg.remove(existing_orientation)
+                            requested.append(pair)
+                ordered_first_leg = requested + first_leg
+                all_matches = ordered_first_leg + [(away_id, home_id) for home_id, away_id in ordered_first_leg]
+
+                existing_rows = c.execute("SELECT id,home_id,away_id,scheduled,status FROM fixtures").fetchall()
+                existing = {(int(row["home_id"]), int(row["away_id"])): row for row in existing_rows}
+                created = 0
+                rescheduled = 0
+                preserved = 0
+                match_date = date(2026, 10, 26)  # Monday, UK local date
+                for index, (home_id, away_id) in enumerate(all_matches):
+                    night_number = index // 2 + 1
+                    kickoff = "20:00" if index % 2 == 0 else "20:30"
+                    scheduled_value = f"{match_date.isoformat()} {kickoff}"
+                    pair = (home_id, away_id)
+                    row = existing.get(pair)
+                    if row is None:
+                        c.execute("INSERT INTO fixtures(home_id,away_id,scheduled,round_no,status) VALUES(?,?,?,?,?)",
+                                  (home_id, away_id, scheduled_value, night_number, "scheduled"))
+                        created += 1
+                    elif str(row["status"] or "scheduled") != "played":
+                        old_schedule = str(row["scheduled"] or "").strip()
+                        if not old_schedule or old_schedule.casefold().startswith("round") or old_schedule.casefold() in ("tbc", "date tbc"):
+                            c.execute("UPDATE fixtures SET scheduled=?,round_no=? WHERE id=?",
+                                      (scheduled_value, night_number, row["id"]))
+                            rescheduled += 1
+                        else:
+                            preserved += 1
+                    else:
+                        preserved += 1
+
+                    if index % 2 == 1:
+                        match_date += timedelta(days=2 if match_date.weekday() == 0 else 5)
+
+                fixture_notice = (f"Fixture schedule applied: {created} new fixtures added, "
+                                  f"{rescheduled} existing unplayed fixtures scheduled, and "
+                                  f"{preserved} existing fixtures/results preserved. "
+                                  f"The full season contains 90 home-and-away fixtures.")
         elif a=="generate_fixtures":
             teams_for_schedule = c.execute("SELECT id, name FROM teams ORDER BY id").fetchall()
             if len(teams_for_schedule) == 10:
@@ -882,7 +973,7 @@ def admin():
     players=c.execute("SELECT * FROM players ORDER BY name").fetchall()
     fixtures_=c.execute("""SELECT f.*,h.name home,a.name away FROM fixtures f
       JOIN teams h ON h.id=f.home_id JOIN teams a ON a.id=f.away_id ORDER BY f.id DESC""").fetchall()
-    c.close(); return render_template("admin.html",teams=teams,players=players,fixtures=fixtures_)
+    c.close(); return render_template("admin.html",teams=teams,players=players,fixtures=fixtures_,fixture_notice=fixture_notice)
 
 # Discord bot -> website sync endpoint. Uses the configured PSL_API_KEY.
 @app.post("/api/results")
